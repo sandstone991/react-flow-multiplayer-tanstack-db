@@ -1,0 +1,29 @@
+{
+  "projectName": "react-flow-multiplayer-tanstack-db",
+  "mode": "file-router",
+  "typescript": true,
+  "tailwind": true,
+  "packageManager": "pnpm",
+  "git": true,
+  "install": true,
+  "addOnOptions": {
+    "drizzle": {
+      "database": "postgresql"
+    }
+  },
+  "includeExamples": true,
+  "envVarValues": {},
+  "routerOnly": false,
+  "version": 1,
+  "framework": "react",
+  "chosenAddOns": [
+    "shadcn",
+    "cloudflare",
+    "tanstack-query",
+    "db",
+    "drizzle",
+    "better-auth",
+    "t3env",
+    "biome"
+  ]
+}
