@@ -9,6 +9,10 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=tanstarter
+  redis:
+    image: redis:alpine
+    ports:
+      - 6379:6379
 
 volumes:
   postgres_data_tanstarter:

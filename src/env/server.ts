@@ -4,6 +4,10 @@ import * as z from "zod";
 export const env = createEnv({
 	server: {
 		DATABASE_URL: z.url(),
+		REDIS_URL: z.preprocess(
+			(value) => (value === "" ? undefined : value),
+			z.url().optional(),
+		),
 		VITE_BASE_URL: z.url().default("http://localhost:3000"),
 		BETTER_AUTH_SECRET: z.string().min(1),
 

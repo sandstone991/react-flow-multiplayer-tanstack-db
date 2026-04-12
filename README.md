@@ -11,9 +11,12 @@ Fill in necessary env variables and then
 
 
 ```bash
+docker-compose up -d
 pnpm install
 pnpm dev
 ```
+
+`docker-compose up -d` starts PostgreSQL and Redis for local development. Redis is optional at runtime: if `REDIS_URL` is not set, the app falls back to in-process pub/sub, which is fine for a single server process.
 
 # Building For Production
 
@@ -33,7 +36,7 @@ pnpm test
 
 # Syncing System
 
-A real-time multiplayer diagram editor built on **TanStack DB**, **Server-Sent Events (SSE)**, and **PostgreSQL**. Multiple users can collaboratively edit the same diagram with optimistic local updates and server-authoritative conflict resolution.
+A real-time multiplayer diagram editor built on **TanStack DB**, **Server-Sent Events (SSE)**, **Redis Pub/Sub**, and **PostgreSQL**. Multiple users can collaboratively edit the same diagram with optimistic local updates and server-authoritative conflict resolution.
 
 ---
 
@@ -42,11 +45,11 @@ A real-time multiplayer diagram editor built on **TanStack DB**, **Server-Sent E
 The system has three layers that work together:
 
 
-| Layer                 | Transport                           | What it carries                                   |
-| --------------------- | ----------------------------------- | ------------------------------------------------- |
-| **Initial Load**      | SSE `initial` event                 | Full snapshot of nodes and edges from Postgres    |
-| **Diagram Mutations** | HTTP POST + SSE `change` events     | Node/edge creates, updates, deletes               |
-| **Presence**          | HTTP POST + SSE `presence-`* events | Cursors, selections, drag state, connecting state |
+| Layer                 | Transport                                             | What it carries                                   |
+| --------------------- | ----------------------------------------------------- | ------------------------------------------------- |
+| **Initial Load**      | SSE `initial` event                                   | Full snapshot of nodes and edges from Postgres    |
+| **Diagram Mutations** | HTTP POST + Redis Pub/Sub + SSE `change` events       | Node/edge creates, updates, deletes               |
+| **Presence**          | HTTP POST + Redis Pub/Sub + SSE `presence-`* events   | Cursors, selections, drag state, connecting state |
 
 
 ```
@@ -58,8 +61,8 @@ The system has three layers that work together:
                │  Drizzle ORM                  │  Drizzle ORM
                │                               │
         ┌──────▼──────┐                 ┌──────▼──────┐
-        │   Server    │  in-process     │   Server    │
-        │   Function  │◄── pub/sub ────►│   SSE       │
+        │   Server    │                 │   Server    │
+        │   Function  │◄── Redis ──────►│   SSE       │
         │  (writes)   │                 │  (reads)    │
         └──────▲──────┘                 └──────┬──────┘
                │                               │
@@ -91,6 +94,7 @@ When a user opens a diagram, the client establishes a **single SSE connection** 
 sequenceDiagram
     participant Client
     participant SSE as SSE Endpoint
+    participant Redis
     participant DB as PostgreSQL
 
     Client->>SSE: GET /api/diagrams/:id/events
@@ -100,6 +104,7 @@ sequenceDiagram
     Note over Client: Populates TanStack DB collections. Marks collections as ready
 
     loop On any mutation by any user
+        Redis-->>SSE: change published for diagram
         SSE-->>Client: event: change {txid, changes[]}
         Note over Client: Applies inserts/updates/deletes to TanStack DB collections
     end
@@ -117,7 +122,7 @@ sequenceDiagram
     participant DB as TanStack DB
     participant Server as Server Function
     participant PG as PostgreSQL
-    participant PubSub as In-Process Pub/Sub
+    participant PubSub as Redis Pub/Sub
     participant SSE as SSE Stream
 
     UI->>UI: Apply change to local React state (instant)
@@ -128,7 +133,7 @@ sequenceDiagram
     Server->>PG: Upsert/delete nodes and edges
     Server->>PG: COMMIT
     Server->>PubSub: publish({diagramId, txid, changes})
-    PubSub->>SSE: Fan out to all subscribers
+    PubSub->>SSE: Fan out to SSE subscribers on every server
     Server-->>DB: Response {txid}
     SSE-->>DB: event: change {txid, changes}
     Note over DB: awaitTxId resolves —<br/>optimistic write confirmed
@@ -231,7 +236,7 @@ Client ──── SSE connected ────── SSE drops ──── auto
 When the SSE connection closes (either by navigation or tab close):
 
 1. The server detects the `abort` signal on the request
-2. Server unsubscribes from pub/sub and removes the user's presence
+2. Server unsubscribes from the diagram channels and removes the user's presence
 3. Client-side cleanup rejects all pending `awaitTxId` promises
 4. The shared `EventSource` is released (ref-counted — only closed when no collections need it)
 
@@ -256,21 +261,24 @@ If the SSE stream doesn't deliver the expected `txid` within **5 seconds**:
 
 ## Presence (Ephemeral State)
 
-Presence data (cursors, selections, drag indicators, connection previews) is **not persisted** — it lives in server memory and is broadcast over the same SSE connection.
+Presence data (cursors, selections, drag indicators, connection previews) is **not persisted to PostgreSQL**. With `REDIS_URL` configured, the latest presence state lives in a Redis hash and updates are fanned out over Redis Pub/Sub, then delivered over the same SSE connection. Without `REDIS_URL`, the app falls back to the in-process presence map.
 
 ```mermaid
 sequenceDiagram
     participant Alice
-    participant Server as Server (in-memory)
+    participant Server
+    participant Redis
     participant Bob
 
     Alice->>Server: POST /presence {cursor: {x: 50, y: 100}}
-    Server->>Server: Update presence map
+    Server->>Redis: HSET presence + publish update
+    Redis-->>Server: Fan out presence-update
     Server-->>Bob: SSE: presence-update {userId: alice, cursor: ...}
     Note over Bob: Renders Alice's cursor with smooth interpolation
 
     Alice->>Server: (SSE connection closes)
-    Server->>Server: Remove Alice from presence map
+    Server->>Redis: HDEL presence + publish leave
+    Redis-->>Server: Fan out presence-leave
     Server-->>Bob: SSE: presence-leave {userId: alice}
     Note over Bob: Removes Alice's cursor
 ```
@@ -327,12 +335,11 @@ Each `change` event contains an array of change items:
 │  Client state          TanStack DB collections        │
 │  Transport             SSE (EventSource)              │
 │  Writes                HTTP POST (server functions)   │
-│  Fan-out               In-process pub/sub             │
+│  Fan-out               Redis Pub/Sub                  │
 │  Conflict resolution   Last-write-wins (row-level)    │
 │  Optimistic updates    Yes (usePacedMutations)        │
 │  Write confirmation    txid echo via SSE (5s timeout) │
-│  Presence              Ephemeral, in-memory           │
+│  Presence              Ephemeral Redis hash + Pub/Sub │
 │  Offline support       Not implemented                │
 └─────────────────────────────────────────────────────┘
 ```
-

@@ -244,7 +244,7 @@ export async function applyDiagramMutations(
 	];
 
 	if (changes.length > 0) {
-		publish({
+		await publish({
 			diagramId: data.diagramId,
 			txid: result.txid,
 			changes,

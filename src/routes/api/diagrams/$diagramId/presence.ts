@@ -43,7 +43,7 @@ export const Route = createFileRoute("/api/diagrams/$diagramId/presence")({
 					connectingFrom: body.connectingFrom ?? null,
 				};
 
-				updatePresence(diagramId, state);
+				await updatePresence(diagramId, state);
 
 				return new Response(null, { status: 204 });
 			},

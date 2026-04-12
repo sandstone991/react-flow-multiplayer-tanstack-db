@@ -51,7 +51,7 @@ export const Route = createFileRoute("/api/diagrams/$diagramId/events")({
 				]);
 
 				const stream = new ReadableStream({
-					start(controller) {
+					async start(controller) {
 						const encoder = new TextEncoder();
 						const send = (event: DiagramSseEventName, data: unknown) => {
 							try {
@@ -67,7 +67,7 @@ export const Route = createFileRoute("/api/diagrams/$diagramId/events")({
 
 						send(DIAGRAM_SSE_EVENT_NAME.INITIAL, { nodes, edges });
 
-						updatePresence(diagramId, {
+						await updatePresence(diagramId, {
 							userId: user.id,
 							userName: user.name,
 							userColor: getUserColor(user.id),
@@ -81,7 +81,7 @@ export const Route = createFileRoute("/api/diagrams/$diagramId/events")({
 
 						send(
 							DIAGRAM_SSE_EVENT_NAME.PRESENCE_INITIAL,
-							getPresenceStates(diagramId),
+							await getPresenceStates(diagramId),
 						);
 
 						const unsub = subscribe(diagramId, (change) => {
