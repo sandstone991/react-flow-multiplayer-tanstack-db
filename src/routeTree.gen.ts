@@ -18,6 +18,10 @@ import { Route as AuthJoinRouteImport } from './routes/_auth/join'
 import { Route as AuthAppRouteRouteImport } from './routes/_auth/app/route'
 import { Route as AuthAppIndexRouteImport } from './routes/_auth/app/index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as AuthAppMembersRouteImport } from './routes/_auth/app/members'
+import { Route as ApiDiagramsDiagramIdPresenceRouteImport } from './routes/api/diagrams/$diagramId/presence'
+import { Route as ApiDiagramsDiagramIdEventsRouteImport } from './routes/api/diagrams/$diagramId/events'
+import { Route as AuthAppDiagramDiagramIdRouteImport } from './routes/_auth/app/diagram.$diagramId'
 
 const GuestRouteRoute = GuestRouteRouteImport.update({
   id: '/_guest',
@@ -62,6 +66,28 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthAppMembersRoute = AuthAppMembersRouteImport.update({
+  id: '/members',
+  path: '/members',
+  getParentRoute: () => AuthAppRouteRoute,
+} as any)
+const ApiDiagramsDiagramIdPresenceRoute =
+  ApiDiagramsDiagramIdPresenceRouteImport.update({
+    id: '/api/diagrams/$diagramId/presence',
+    path: '/api/diagrams/$diagramId/presence',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiDiagramsDiagramIdEventsRoute =
+  ApiDiagramsDiagramIdEventsRouteImport.update({
+    id: '/api/diagrams/$diagramId/events',
+    path: '/api/diagrams/$diagramId/events',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthAppDiagramDiagramIdRoute = AuthAppDiagramDiagramIdRouteImport.update({
+  id: '/diagram/$diagramId',
+  path: '/diagram/$diagramId',
+  getParentRoute: () => AuthAppRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -69,16 +95,24 @@ export interface FileRoutesByFullPath {
   '/join': typeof AuthJoinRoute
   '/login': typeof GuestLoginRoute
   '/signup': typeof GuestSignupRoute
+  '/app/members': typeof AuthAppMembersRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/app/': typeof AuthAppIndexRoute
+  '/app/diagram/$diagramId': typeof AuthAppDiagramDiagramIdRoute
+  '/api/diagrams/$diagramId/events': typeof ApiDiagramsDiagramIdEventsRoute
+  '/api/diagrams/$diagramId/presence': typeof ApiDiagramsDiagramIdPresenceRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/join': typeof AuthJoinRoute
   '/login': typeof GuestLoginRoute
   '/signup': typeof GuestSignupRoute
+  '/app/members': typeof AuthAppMembersRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/app': typeof AuthAppIndexRoute
+  '/app/diagram/$diagramId': typeof AuthAppDiagramDiagramIdRoute
+  '/api/diagrams/$diagramId/events': typeof ApiDiagramsDiagramIdEventsRoute
+  '/api/diagrams/$diagramId/presence': typeof ApiDiagramsDiagramIdPresenceRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -89,8 +123,12 @@ export interface FileRoutesById {
   '/_auth/join': typeof AuthJoinRoute
   '/_guest/login': typeof GuestLoginRoute
   '/_guest/signup': typeof GuestSignupRoute
+  '/_auth/app/members': typeof AuthAppMembersRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/_auth/app/': typeof AuthAppIndexRoute
+  '/_auth/app/diagram/$diagramId': typeof AuthAppDiagramDiagramIdRoute
+  '/api/diagrams/$diagramId/events': typeof ApiDiagramsDiagramIdEventsRoute
+  '/api/diagrams/$diagramId/presence': typeof ApiDiagramsDiagramIdPresenceRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -100,10 +138,24 @@ export interface FileRouteTypes {
     | '/join'
     | '/login'
     | '/signup'
+    | '/app/members'
     | '/api/auth/$'
     | '/app/'
+    | '/app/diagram/$diagramId'
+    | '/api/diagrams/$diagramId/events'
+    | '/api/diagrams/$diagramId/presence'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/join' | '/login' | '/signup' | '/api/auth/$' | '/app'
+  to:
+    | '/'
+    | '/join'
+    | '/login'
+    | '/signup'
+    | '/app/members'
+    | '/api/auth/$'
+    | '/app'
+    | '/app/diagram/$diagramId'
+    | '/api/diagrams/$diagramId/events'
+    | '/api/diagrams/$diagramId/presence'
   id:
     | '__root__'
     | '/'
@@ -113,8 +165,12 @@ export interface FileRouteTypes {
     | '/_auth/join'
     | '/_guest/login'
     | '/_guest/signup'
+    | '/_auth/app/members'
     | '/api/auth/$'
     | '/_auth/app/'
+    | '/_auth/app/diagram/$diagramId'
+    | '/api/diagrams/$diagramId/events'
+    | '/api/diagrams/$diagramId/presence'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -122,6 +178,8 @@ export interface RootRouteChildren {
   AuthRouteRoute: typeof AuthRouteRouteWithChildren
   GuestRouteRoute: typeof GuestRouteRouteWithChildren
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiDiagramsDiagramIdEventsRoute: typeof ApiDiagramsDiagramIdEventsRoute
+  ApiDiagramsDiagramIdPresenceRoute: typeof ApiDiagramsDiagramIdPresenceRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -189,15 +247,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_auth/app/members': {
+      id: '/_auth/app/members'
+      path: '/members'
+      fullPath: '/app/members'
+      preLoaderRoute: typeof AuthAppMembersRouteImport
+      parentRoute: typeof AuthAppRouteRoute
+    }
+    '/api/diagrams/$diagramId/presence': {
+      id: '/api/diagrams/$diagramId/presence'
+      path: '/api/diagrams/$diagramId/presence'
+      fullPath: '/api/diagrams/$diagramId/presence'
+      preLoaderRoute: typeof ApiDiagramsDiagramIdPresenceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/diagrams/$diagramId/events': {
+      id: '/api/diagrams/$diagramId/events'
+      path: '/api/diagrams/$diagramId/events'
+      fullPath: '/api/diagrams/$diagramId/events'
+      preLoaderRoute: typeof ApiDiagramsDiagramIdEventsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_auth/app/diagram/$diagramId': {
+      id: '/_auth/app/diagram/$diagramId'
+      path: '/diagram/$diagramId'
+      fullPath: '/app/diagram/$diagramId'
+      preLoaderRoute: typeof AuthAppDiagramDiagramIdRouteImport
+      parentRoute: typeof AuthAppRouteRoute
+    }
   }
 }
 
 interface AuthAppRouteRouteChildren {
+  AuthAppMembersRoute: typeof AuthAppMembersRoute
   AuthAppIndexRoute: typeof AuthAppIndexRoute
+  AuthAppDiagramDiagramIdRoute: typeof AuthAppDiagramDiagramIdRoute
 }
 
 const AuthAppRouteRouteChildren: AuthAppRouteRouteChildren = {
+  AuthAppMembersRoute: AuthAppMembersRoute,
   AuthAppIndexRoute: AuthAppIndexRoute,
+  AuthAppDiagramDiagramIdRoute: AuthAppDiagramDiagramIdRoute,
 }
 
 const AuthAppRouteRouteWithChildren = AuthAppRouteRoute._addFileChildren(
@@ -237,6 +327,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRouteRoute: AuthRouteRouteWithChildren,
   GuestRouteRoute: GuestRouteRouteWithChildren,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiDiagramsDiagramIdEventsRoute: ApiDiagramsDiagramIdEventsRoute,
+  ApiDiagramsDiagramIdPresenceRoute: ApiDiagramsDiagramIdPresenceRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

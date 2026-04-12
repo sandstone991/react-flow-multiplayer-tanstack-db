@@ -8,7 +8,7 @@ import * as schema from "@/lib/drizzle/schema";
 const client = postgres(env.DATABASE_URL);
 
 export const db = drizzle({
-  client,
-  schema,
-  casing: "snake_case",
+	client,
+	schema,
+	casing: "snake_case",
 });

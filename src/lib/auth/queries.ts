@@ -7,9 +7,9 @@ import { $getUser } from "./functions";
  * that protects all child routes under it (e.g. _auth/app/*)
  */
 export const authQueryOptions = () =>
-  queryOptions({
-    queryKey: ["user"],
-    queryFn: ({ signal }) => $getUser({ signal }),
-  });
+	queryOptions({
+		queryKey: ["user"],
+		queryFn: ({ signal }) => $getUser({ signal }),
+	});
 
 export type AuthQueryResult = Awaited<ReturnType<typeof $getUser>>;

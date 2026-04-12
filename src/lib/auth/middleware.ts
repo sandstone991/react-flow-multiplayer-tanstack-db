@@ -15,14 +15,14 @@ import { _getUser } from "@/lib/auth/functions";
  * @see https://better-auth.com/docs/concepts/session-management#cookie-cache
  */
 export const authMiddleware = createMiddleware().server(async ({ next }) => {
-  const user = await _getUser();
+	const user = await _getUser();
 
-  if (!user) {
-    setResponseStatus(401);
-    throw new Error("Unauthorized");
-  }
+	if (!user) {
+		setResponseStatus(401);
+		throw new Error("Unauthorized");
+	}
 
-  return next({ context: { user } });
+	return next({ context: { user } });
 });
 
 /**
@@ -33,17 +33,19 @@ export const authMiddleware = createMiddleware().server(async ({ next }) => {
  *
  * @see https://better-auth.com/docs/concepts/session-management#cookie-cache
  */
-export const freshAuthMiddleware = createMiddleware().server(async ({ next }) => {
-  const user = await _getUser({
-    // ensure session is fresh
-    // https://better-auth.com/docs/concepts/session-management#cookie-cache
-    disableCookieCache: true,
-  });
+export const freshAuthMiddleware = createMiddleware().server(
+	async ({ next }) => {
+		const user = await _getUser({
+			// ensure session is fresh
+			// https://better-auth.com/docs/concepts/session-management#cookie-cache
+			disableCookieCache: true,
+		});
 
-  if (!user) {
-    setResponseStatus(401);
-    throw new Error("Unauthorized");
-  }
+		if (!user) {
+			setResponseStatus(401);
+			throw new Error("Unauthorized");
+		}
 
-  return next({ context: { user } });
-});
+		return next({ context: { user } });
+	},
+);

@@ -7,11 +7,11 @@ import { authQueryOptions } from "./queries";
 // so these will not result in unnecessary duplicate calls.
 
 export function useAuth() {
-  const { data: user, isPending } = useQuery(authQueryOptions());
-  return { user, isPending };
+	const { data: user, isPending } = useQuery(authQueryOptions());
+	return { user, isPending };
 }
 
 export function useAuthSuspense() {
-  const { data: user } = useSuspenseQuery(authQueryOptions());
-  return { user };
+	const { data: user } = useSuspenseQuery(authQueryOptions());
+	return { user };
 }
