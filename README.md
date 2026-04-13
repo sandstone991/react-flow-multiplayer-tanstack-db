@@ -35,6 +35,10 @@ pnpm test
 
 A real-time multiplayer diagram editor built on **TanStack DB**, **Server-Sent Events (SSE)**, and **PostgreSQL**. Multiple users can collaboratively edit the same diagram with optimistic local updates and server-authoritative conflict resolution.
 
+## Demo
+
+![Multiplayer diagram editor demo](docs/assets/multiplayer-diagram-demo.gif)
+
 ---
 
 ## Architecture Overview
@@ -335,4 +339,3 @@ Each `change` event contains an array of change items:
 │  Offline support       Not implemented                │
 └─────────────────────────────────────────────────────┘
 ```
-
